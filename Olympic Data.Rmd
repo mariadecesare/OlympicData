@@ -1,0 +1,68 @@
+---
+title: "Data Science Comes to the Olympics"
+author: "Maria DeCesare"
+date: "February 16, 2022"
+output: html_document
+---
+
+```{r, setup,include=FALSE}
+knitr::opts_chunk$set(echo=TRUE,message=FALSE,warning=FALSE)
+library(mdsr)
+library(tidyverse)
+library(mclust) 
+```
+
+
+
+Load in data:
+```{r}
+olympic_data <- read_csv("athlete_events.csv")
+```
+
+
+
+Filter data:
+```{r}
+
+
+new_data <- olympic_data %>% 
+  drop_na(Medal) %>%
+  filter(Sport == "Ice Hockey") %>%
+  select(Sex, Height, Weight, Medal) %>% 
+  drop_na(Sex, Height, Weight, Medal) 
+
+clusts <- new_data %>%
+  select(Height, Weight) %>% # Variables I am clustering
+  kmeans(centers = 6) %>% #number of clusters
+  fitted("classes") %>%
+  as.character()
+
+# Add the clusters onto the data frame
+new_data <- new_data %>%
+  mutate(cluster = clusts)
+
+view(new_data)
+```
+
+
+
+Graph:
+```{r}
+new_data %>%
+  ggplot(aes(x = Height, y = Weight)) +
+  geom_point(aes(color = Medal,shape = cluster), size = 0.5) +
+  stat_smooth(method='lm', col="Black", size=0.3) + 
+  facet_grid(.~Sex) + 
+  theme(panel.spacing = unit(0.5, "cm", data = NULL)) +
+  ggtitle("Height and Weight for Different Medals Awarded in Olympic Ice Hockey") + 
+  labs(y= "Weight (kg)", x = "Height (cm)") +
+  theme(plot.title = element_text(size=8)) 
+```
+
+
+A few conclusions I made from the graphic:
+
+First, the best fit line is a bit steeper for the men than the women. I think that this is because a man that is an inch taller has an inch more "man body" if you will, making him all that more heavier. Whereas a woman who's an inch taller has an inch more of "woman body" which isn't as heavy, thus the line for men would be steeper. 
+
+Another thing to note, the different clusters help to show us that there's more correlation with size and winning better medals with women than there is for men. This is pretty interesting because with men having more contact, one would think that size would help them more. But I also feel this makes sense because 
+
